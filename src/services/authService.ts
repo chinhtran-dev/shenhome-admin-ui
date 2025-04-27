@@ -2,6 +2,7 @@ import { Url } from "@/util/appUrl";
 import baseService from "./baseService";
 import { LoginRequest } from "./requests/authRequest";
 import { LoginResponse } from "./responses/authResponse";
+import { ApiResponse } from "./responses/baseResponse";
 
 export class AuthService {
 
@@ -9,9 +10,10 @@ export class AuthService {
         const res = await baseService.post(`${Url.auth.login}`, request);
 
         if (res != null) {
-            const response = res as LoginResponse;
-            localStorage.setItem('accessToken', response.accessToken!);
-            localStorage.setItem('refreshToken', response.refreshToken!);
+            const response = res.data as ApiResponse<LoginResponse>;
+            const responseData = response.data;
+            localStorage.setItem('accessToken', responseData.accessToken!);
+            localStorage.setItem('refreshToken', responseData.refreshToken!);
         }
         
 		return res.data;

@@ -18,5 +18,25 @@ export interface ApiResponse<T> {
 	}
 	
 	return responseData as ApiResponse<T>;
-  };
+};
   
+export interface Pagination {
+	current: number,
+	pageSize: number,
+	total: number
+}
+  
+
+export interface SearchResponse<T> {
+	totalRecords: number,
+	pageNum: number,
+	pageSize: number,
+	totalPages: number,
+	succeeded: boolean;
+	message: string;
+	code: string;
+	data: T[];
+	errors: string | null;
+	request: string;
+	returnUrl: string | null;
+}

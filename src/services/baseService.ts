@@ -50,16 +50,6 @@ baseService.interceptors.request.use(
 // --- Response Interceptor ---
 baseService.interceptors.response.use(
   (response) => {
-    const responseData = response.data;
-
-    if (typeof responseData === 'object' && responseData !== null) {
-      if (!responseData.succeeded) {
-        const error = new Error(responseData.errors || responseData.message || 'Unknown error');
-        throw error;
-      }
-      return responseData.data;
-    }
-
     return response;
   },
   async (error: AxiosError) => {
