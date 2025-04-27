@@ -17,11 +17,23 @@ const authService = new AuthService();
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
-
-  useEffect(() => {
-    // Check initial authentication status
-    setIsAuthenticated(authService.isAuthenticated());
-  }, []);
+  
+    useEffect(() => {
+      const checkAuth = () => {
+        const isAuth = authService.isAuthenticated();
+        setIsAuthenticated(isAuth);
+        
+        const path = window.location.pathname;
+        
+        if (isAuth && path.startsWith('/auth')) {
+          router.push('/admin');
+        } else if (!isAuth && !path.startsWith('/auth')) {
+          router.push('/auth/login');
+        }
+      };
+  
+      checkAuth();
+    }, [router]);
 
   const login = async (request: LoginRequest) => {
     try {
