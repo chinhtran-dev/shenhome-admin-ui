@@ -29,8 +29,6 @@ export class DeviceProfileService {
 	async view(id: string): Promise<DeviceProfileViewResponse> {
 		const res = await baseService.get(Url.deviceProfile.view(id));
 		const responseData = res.data as ApiResponse<DeviceProfileViewResponse>;
-
-		console.log(responseData.data);
 	
 		return responseData.data;
 	}

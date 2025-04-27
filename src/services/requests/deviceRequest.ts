@@ -1,5 +1,5 @@
 export class CreateDeviceRequest {
-	name: string;
+	name?: string;
 	deviceProfileId: string;
 
 	constructor(name: string, deviceProfileId: string) {

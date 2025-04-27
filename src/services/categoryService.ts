@@ -28,10 +28,7 @@ export class CategoryService {
 
 	async view(id: string): Promise<CategorySearchResponse> {
 		const res = await baseService.get(Url.category.view(id));
-		const responseData = res.data as ApiResponse<CategorySearchResponse>;
-
-		console.log(responseData.data);
-	
+		const responseData = res.data as ApiResponse<CategorySearchResponse>;	
 		return responseData.data;
 	}
 
