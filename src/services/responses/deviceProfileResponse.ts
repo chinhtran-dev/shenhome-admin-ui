@@ -20,6 +20,6 @@ export interface DeviceProfileViewResponse extends DeviceProfileSearchResponse {
 }
 
 export interface ListSelectItem {
-	id: string;
-	name: string;
-  }
+  id: string;
+  name: string;
+}

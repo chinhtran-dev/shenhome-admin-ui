@@ -1,68 +1,171 @@
 'use client'
-import { useState } from 'react';
-import { Table, Button, Space, Popconfirm, Modal, Form, Input, Select, Badge } from 'antd';
-import { mockDeviceProfiles, DeviceProfile } from '@/dto/deviceProfile';
-import { mockSelectCategories } from '@/dto/category';
+
+import { useEffect, useMemo, useState } from 'react';
+import { Table, Button, Space, Popconfirm, Modal, Form, Input, Select, Badge, message } from 'antd';
+import { DeviceProfileService } from '@/services/deviceProfileService';
+import { SearchRequest } from '@/services/requests/baseRequest';
+import { CreateDeviceProfileRequest, UpdateDeviceProfileRequest } from '@/services/requests/deviceProfileRequest';
+import { DeviceProfileSearchResponse, DeviceProfileViewResponse } from '@/services/responses/deviceProfileResponse';
+import { CategoryService } from '@/services/categoryService';
+import { CategoryListSelectItem } from '@/services/responses/categoryResponse';
 
 const { Option } = Select;
 
 export default function DeviceProfileListPage() {
-	const [deviceProfiles, setDeviceProfiles] = useState<DeviceProfile[]>(mockDeviceProfiles);
-	const [filteredProfiles, setFilteredProfiles] = useState<DeviceProfile[]>(mockDeviceProfiles);
-	const [isModalVisible, setIsModalVisible] = useState(false);
-	const [currentProfile, setCurrentProfile] = useState<DeviceProfile | null>(null);
+	const [deviceProfiles, setDeviceProfiles] = useState<DeviceProfileSearchResponse[]>([]);
+	const [loading, setLoading] = useState(false);
+	const [modalVisible, setModalVisible] = useState(false);
+	const [currentProfile, setCurrentProfile] = useState<DeviceProfileViewResponse | null>(null);
 	const [form] = Form.useForm();
 	const [filterName, setFilterName] = useState('');
+	const [categories, setCategories] = useState<CategoryListSelectItem[]>([]);
+	const [pagination, setPagination] = useState({
+		current: 1,
+		pageSize: 10,
+		total: 0
+	});
 
-	const handleDelete = (id: string) => {
-		setDeviceProfiles(deviceProfiles.filter((p) => p.id !== id));
-		setFilteredProfiles(filteredProfiles.filter((p) => p.id !== id));
-	};
+	const deviceProfileService = useMemo(() => new DeviceProfileService(), []);
+	const categoryService = useMemo(() => new CategoryService(), []);
 
-	const handleCreateOrEdit = (values: DeviceProfile) => {
-		if (currentProfile) {
-			const updatedProfile = { ...currentProfile, ...values };
-			setDeviceProfiles(
-				deviceProfiles.map((p) => (p.id === updatedProfile.id ? updatedProfile : p))
-			);
-			setFilteredProfiles(
-				filteredProfiles.map((p) => (p.id === updatedProfile.id ? updatedProfile : p))
-			);
-		} else {
-			const newProfile: DeviceProfile = {
-				...values,
-				id: (deviceProfiles.length + 1).toString(),
-				attributes: values.attributes || [],
-				telemetries: values.telemetries || [],
-			};
-			setDeviceProfiles([...deviceProfiles, newProfile]);
-			setFilteredProfiles([...filteredProfiles, newProfile]);
+	useEffect(() => {
+		loadDeviceProfiles();
+		loadCategories();
+	}, []);
+
+	const loadCategories = async () => {
+		try {
+			const data = await categoryService.listSelect();
+			console.log(data);
+			setCategories(data);
+		} catch (error) {
+			message.error('Failed to load categories');
+			console.error(error);
 		}
-		setIsModalVisible(false);
-		setCurrentProfile(null);
 	};
 
-	const handleEdit = (profile: DeviceProfile) => {
-		setCurrentProfile(profile);
-		form.setFieldsValue(profile);
-		setIsModalVisible(true);
+	const loadDeviceProfiles = async (page: number = 1, pageSize: number = 10) => {
+		try {
+			setLoading(true);
+			const request = new SearchRequest(true, undefined, undefined, page, pageSize);
+			const response = await deviceProfileService.search(request);
+			setDeviceProfiles(response.data);
+			setPagination({
+				current: response.pageNum,
+				pageSize: response.pageSize,
+				total: response.totalRecords
+			});
+		} catch (error) {
+			message.error('Failed to load device profiles');
+			console.error(error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleTableChange = (pagination: any) => {
+		loadDeviceProfiles(pagination.current, pagination.pageSize);
+	};
+
+	const handleDelete = async (id: string) => {
+		try {
+			setLoading(true);
+			await deviceProfileService.delete(id);
+			message.success('Device profile deleted successfully');
+			await loadDeviceProfiles(pagination.current, pagination.pageSize);
+		} catch (error) {
+			message.error('Failed to delete device profile');
+			console.error(error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleEdit = async (profile: DeviceProfileViewResponse) => {
+		try {
+			setLoading(true);
+			const data = await deviceProfileService.view(profile.id);
+			setCurrentProfile(data);
+			form.setFieldsValue({
+				name: data.name,
+				code: data.code,
+				type: data.type,
+				iconCodePoint: data.iconCodePoint,
+				categoryId: data.categoryId,
+				status: data.status,
+				attributes: data.attributes != null ? data.attributes : [{}],
+				telemetries: data.telemetries != null ? data.telemetries : [{}],
+				commands: data.commands.length ? data.commands : [{}]
+			});
+			setModalVisible(true);
+		} catch (error) {
+			message.error('Failed to load device profile details');
+			console.error(error);
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	const handleCreate = () => {
 		setCurrentProfile(null);
 		form.resetFields();
-		setIsModalVisible(true);
+		form.setFieldsValue({
+			status: 'Enabled',
+			attributes: [{}],
+			telemetries: [{}],
+			commands: [{}]
+		});
+		setModalVisible(true);
+	};
+
+	const handleSubmit = async (values: any) => {
+		try {
+			setLoading(true);
+			const formValues = form.getFieldsValue();
+			console.log(formValues);
+			
+			const categoryId = values.categoryId;
+			if (currentProfile) {
+				const request = new UpdateDeviceProfileRequest(
+					values.name,
+					values.code,
+					categoryId,
+					values.type,
+					values.iconCodePoint,
+					values.attributes,
+					values.telemetries,
+					values.commands
+				);
+				console.log(request);
+				await deviceProfileService.update(request, currentProfile.id);
+				message.success('Device profile updated successfully');
+			} else {
+				const request = new CreateDeviceProfileRequest(
+					values.name,
+					values.code,
+					categoryId,
+					values.type,
+					values.iconCodePoint,
+					values.attributes,
+					values.telemetries,
+					values.commands
+				);
+				await deviceProfileService.create(request);
+				message.success('Device profile created successfully');
+			}
+			setModalVisible(false);
+			await loadDeviceProfiles(pagination.current, pagination.pageSize);
+		} catch (error) {
+			message.error(currentProfile ? 'Failed to update device profile' : 'Failed to create device profile');
+			console.error(error);
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	const handleFilterChange = (value: string) => {
 		setFilterName(value);
-		if (value) {
-			setFilteredProfiles(
-				deviceProfiles.filter((p) => p.name.toLowerCase().includes(value.toLowerCase()))
-			);
-		} else {
-			setFilteredProfiles(deviceProfiles);
-		}
+		loadDeviceProfiles(1, pagination.pageSize);
 	};
 
 	const columns = [
@@ -107,7 +210,7 @@ export default function DeviceProfileListPage() {
 		{
 			title: 'Action',
 			key: 'action',
-			render: (_: undefined, record: DeviceProfile) => (
+			render: (_: undefined, record: DeviceProfileViewResponse) => (
 				<Space size="middle">
 					<Button type="link" onClick={() => handleEdit(record)}>
 						Edit
@@ -131,7 +234,6 @@ export default function DeviceProfileListPage() {
 				</Button>
 			</div>
 
-			{/* Filter */}
 			<div className="mb-4">
 				<Input
 					placeholder="Search by name"
@@ -140,23 +242,29 @@ export default function DeviceProfileListPage() {
 				/>
 			</div>
 
-			{/* Table */}
-			<Table columns={columns} dataSource={filteredProfiles} rowKey="id" />
+			<Table
+				loading={loading}
+				columns={columns}
+				dataSource={deviceProfiles}
+				rowKey="id"
+				pagination={{
+					current: pagination.current,
+					pageSize: pagination.pageSize,
+					total: pagination.total,
+					showSizeChanger: true,
+					showTotal: (total) => `Total ${total} items`
+				}}
+				onChange={handleTableChange}
+			/>
 
-			{/* Modal */}
 			<Modal
 				title={currentProfile ? 'Edit Device Profile' : 'Create Device Profile'}
-				open={isModalVisible}
-				onCancel={() => setIsModalVisible(false)}
+				open={modalVisible}
+				onCancel={() => setModalVisible(false)}
 				footer={null}
 				width={800}
 			>
-				<Form form={form} layout="vertical" onFinish={handleCreateOrEdit} initialValues={{
-					status: 'Enabled',
-					attributes: currentProfile?.attributes || [{}],
-					telemetries: currentProfile?.telemetries || [{}],
-					commands: currentProfile?.commands || [{}],
-				}}>
+				<Form form={form} layout="vertical" onFinish={handleSubmit}>
 					<Form.Item label="Name" name="name" rules={[{ required: true }]}>
 						<Input />
 					</Form.Item>
@@ -170,33 +278,32 @@ export default function DeviceProfileListPage() {
 					</Form.Item>
 
 					<Form.Item label="Type" name="type" rules={[{ required: true }]}>
-						<Select placeholder="Select type">
-							<Option key={1} value="sensor">Sensor</Option>
-							<Option key={2} value="actuator">Actuator</Option>
+						<Select placeholder="Select type" value={currentProfile?.type}>
+							<Option value="Sensor">Sensor</Option>
+							<Option value="Actuator">Actuator</Option>
 						</Select>
 					</Form.Item>
 
 					<Form.Item label="Status" name="status" rules={[{ required: true }]}>
 						<Select>
-							<Option key={1} value="Enabled">Enabled</Option>
-							<Option key={2} value="Disabled">Disabled</Option>
+							<Option value="Enabled">Enabled</Option>
+							<Option value="Disabled">Disabled</Option>
 						</Select>
 					</Form.Item>
 
 					<Form.Item
 						label="Category"
-						name="category"
+						name="categoryId"
 						rules={[{ required: true, message: 'Please select a category!' }]}
 					>
 						<Select placeholder="Select category" value={currentProfile?.categoryId}>
-							{mockSelectCategories.map((category) => (
+							{categories.map((category) => (
 								<Option key={category.id} value={category.id}>
 									{category.name}
 								</Option>
 							))}
 						</Select>
 					</Form.Item>
-
 
 					{/* Attributes Table */}
 					<Form.List name="attributes">
@@ -210,16 +317,16 @@ export default function DeviceProfileListPage() {
 								</div>
 								{fields.map(({ key, name, ...restField }) => (
 									<Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
-										<Form.Item {...restField} name={[name, 'key']} rules={[{ required: true, message: 'Key required' }]}>
+										<Form.Item {...restField} name={[name, 'key']} rules={[{ required: true }]}>
 											<Input placeholder="Key" />
 										</Form.Item>
-										<Form.Item {...restField} name={[name, 'type']} rules={[{ required: true, message: 'Type required' }]}>
+										<Form.Item {...restField} name={[name, 'type']} rules={[{ required: true }]}>
 											<Select placeholder="Select type">
-												<Option key={1} value="string">String</Option>
-												<Option key={2} value="float">Float</Option>
-												<Option key={3} value="double">Double</Option>
-												<Option key={4} value="int">Int</Option>
-												<Option key={5} value="int">Boolean</Option>
+												<Option value="string">String</Option>
+												<Option value="float">Float</Option>
+												<Option value="double">Double</Option>
+												<Option value="int">Int</Option>
+												<Option value="boolean">Boolean</Option>
 											</Select>
 										</Form.Item>
 										<Form.Item {...restField} name={[name, 'unit']}>
@@ -244,16 +351,16 @@ export default function DeviceProfileListPage() {
 								</div>
 								{fields.map(({ key, name, ...restField }) => (
 									<Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
-										<Form.Item {...restField} name={[name, 'key']} rules={[{ required: true, message: 'Key required' }]}>
+										<Form.Item {...restField} name={[name, 'key']} rules={[{ required: true }]}>
 											<Input placeholder="Key" />
 										</Form.Item>
-										<Form.Item {...restField} name={[name, 'type']} rules={[{ required: true, message: 'Type required' }]}>
+										<Form.Item {...restField} name={[name, 'type']} rules={[{ required: true }]}>
 											<Select placeholder="Select type">
-												<Option key={1} value="string">String</Option>
-												<Option key={2} value="float">Float</Option>
-												<Option key={3} value="double">Double</Option>
-												<Option key={4} value="int">Int</Option>
-												<Option key={4} value="int">Boolean</Option>
+												<Option value="string">String</Option>
+												<Option value="float">Float</Option>
+												<Option value="double">Double</Option>
+												<Option value="int">Int</Option>
+												<Option value="boolean">Boolean</Option>
 											</Select>
 										</Form.Item>
 										<Form.Item {...restField} name={[name, 'unit']}>
@@ -266,7 +373,7 @@ export default function DeviceProfileListPage() {
 						)}
 					</Form.List>
 
-					{/* Commands List */}
+					{/* Commands Table */}
 					<Form.List name="commands">
 						{(fields, { add, remove }) => (
 							<>
@@ -278,27 +385,23 @@ export default function DeviceProfileListPage() {
 								</div>
 								{fields.map(({ key, name, ...restField }) => (
 									<Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
-										<Form.Item {...restField} name={[name, 'name']} rules={[{ required: true, message: 'Name required' }]}>
-											<Input placeholder="Command Name" />
+										<Form.Item {...restField} name={[name, 'name']} rules={[{ required: true }]}>
+											<Input placeholder="Name" />
 										</Form.Item>
-
 										<Form.Item {...restField} name={[name, 'comparision']} rules={[{ required: true }]}>
-											<Select placeholder="Select comparison">
+											<Select placeholder="Select Comparision">
 												<Option value="eq">Equal</Option>
 												<Option value="neq">Not Equal</Option>
 												<Option value="gt">Greater Than</Option>
 												<Option value="lt">Less Than</Option>
 											</Select>
 										</Form.Item>
-
 										<Form.Item {...restField} name={[name, 'property', 'key']} rules={[{ required: true }]}>
 											<Input placeholder="Property Key" />
 										</Form.Item>
-
 										<Form.Item {...restField} name={[name, 'property', 'value']} rules={[{ required: true }]}>
 											<Input placeholder="Property Value" />
 										</Form.Item>
-
 										<Button danger onClick={() => remove(name)}>Delete</Button>
 									</Space>
 								))}
@@ -307,8 +410,8 @@ export default function DeviceProfileListPage() {
 					</Form.List>
 
 					<Form.Item className="mt-4">
-						<Button type="primary" htmlType="submit" block>
-							{currentProfile ? 'Save Changes' : 'Create'}
+						<Button type="primary" htmlType="submit" loading={loading}>
+							Submit
 						</Button>
 					</Form.Item>
 				</Form>

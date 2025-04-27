@@ -1,7 +1,8 @@
 export interface Command {
-	id?: string;
-	name: string;
-	property: Map<string, string | number | boolean>;
-	comparision: 'eq' | 'neq' | 'gt' | 'lt';
-  }
-  
+  name: string;
+  property: {
+    key: string;
+    value: string | number | boolean;
+  };
+  comparision: "eq" | "neq" | "gt" | "lt";
+}
