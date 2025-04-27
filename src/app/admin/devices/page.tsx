@@ -146,6 +146,7 @@ export default function DeviceListPage() {
       title: 'ID',
       dataIndex: 'id',
       key: 'id',
+	  ellipsis: true,
     },
     {
       title: 'Status',
@@ -154,37 +155,42 @@ export default function DeviceListPage() {
       render: (status: string) => (
         <Badge status={status === 'Enabled' ? 'success' : 'error'} text={status} />
       ),
+      width: 120,
     },
     {
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
+      width: 200,
+      ellipsis: true,
     },
     {
-		title: 'Device Token',
-		dataIndex: 'deviceToken',
-		key: 'deviceToken',
-		render: (deviceToken: string) => {
-		  const truncatedToken = deviceToken.length > 20 
-			? `${deviceToken.slice(0, 8)}...${deviceToken.slice(-8)}` 
-			: deviceToken;
-		  
-		  return (
-			<Space>
-			  <span title={deviceToken}>{truncatedToken}</span>
-			  <Button 
-				onClick={() => {
-				  navigator.clipboard.writeText(deviceToken);
-				  message.success('Device Token copied!');
-				}} 
-				type="link"
-			  >
-				Copy
-			  </Button>
-			</Space>
-		  );
-		},
-	  },
+      title: 'Device Token',
+      dataIndex: 'deviceToken',
+      key: 'deviceToken',
+      render: (deviceToken: string) => {
+        const truncatedToken = deviceToken.length > 20 
+          ? `${deviceToken.slice(0, 8)}...${deviceToken.slice(-8)}` 
+          : deviceToken;
+        
+        return (
+          <Space>
+            <span title={deviceToken}>{truncatedToken}</span>
+            <Button 
+              onClick={() => {
+                navigator.clipboard.writeText(deviceToken);
+                message.success('Device Token copied!');
+              }} 
+              type="link"
+            >
+              Copy
+            </Button>
+          </Space>
+        );
+      },
+      width: 200,
+      ellipsis: true,
+    },
     {
       title: 'Heartbeat',
       dataIndex: 'heartbeat',
@@ -192,21 +198,25 @@ export default function DeviceListPage() {
       render: (heartbeat: boolean) => (
         <Badge status={heartbeat ? 'success' : 'error'} text={heartbeat ? 'Active' : 'Inactive'} />
       ),
+      width: 120,
     },
     {
       title: 'Last Heartbeat',
       dataIndex: 'lastHeartbeat',
       key: 'lastHeartbeat',
+      width: 150,
     },
     {
       title: 'Created On',
       dataIndex: 'createdOn',
       key: 'createdOn',
+      width: 150,
     },
     {
       title: 'Modified On',
       dataIndex: 'modifiedOn',
       key: 'modifiedOn',
+      width: 150,
     },
     {
       title: 'Action',
@@ -221,6 +231,7 @@ export default function DeviceListPage() {
           </Popconfirm>
         </Space>
       ),
+      width: 180,
     },
   ];
 
@@ -254,6 +265,7 @@ export default function DeviceListPage() {
           showTotal: (total) => `Total ${total} items`
         }}
         onChange={handleTableChange}
+        scroll={{ x: 'max-content' }}  // Enables horizontal scroll
       />
 
       <Modal
@@ -262,15 +274,14 @@ export default function DeviceListPage() {
         onCancel={() => setModalVisible(false)}
         footer={null}
         width={800}
-		  >
-			  
-			  {currentDevice && (
-            <>
-              <Form.Item label="Id">
-                <Input disabled value={currentDevice.id} />
-              </Form.Item>
-            </>
-          )}
+      >
+        {currentDevice && (
+          <>
+            <Form.Item label="Id">
+              <Input disabled value={currentDevice.id} />
+            </Form.Item>
+          </>
+        )}
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
           <Form.Item 
             label="Name" 

@@ -56,7 +56,6 @@ export default function DeviceProfileListPage() {
   const loadCategories = async () => {
     try {
       const data = await categoryService.listSelect();
-      console.log(data);
       setCategories(data);
     } catch (error) {
       message.error("Failed to load categories");
@@ -150,9 +149,6 @@ export default function DeviceProfileListPage() {
   const handleSubmit = async (values: any) => {
     try {
       setLoading(true);
-      const formValues = form.getFieldsValue();
-      console.log(formValues);
-
       const categoryId = values.categoryId;
       if (currentProfile) {
         const request = new UpdateDeviceProfileRequest(
@@ -165,7 +161,6 @@ export default function DeviceProfileListPage() {
           values.telemetries,
           values.commands
         );
-        console.log(request);
         await deviceProfileService.update(request, currentProfile.id);
         message.success("Device profile updated successfully");
       } else {
@@ -206,11 +201,13 @@ export default function DeviceProfileListPage() {
       title: "ID",
       dataIndex: "id",
       key: "id",
+			ellipsis: true,
     },
     {
       title: "IconCodePoint",
       dataIndex: "iconCodePoint",
       key: "iconCodePoint",
+      width: 200, // Điều chỉnh chiều rộng cột
     },
     {
       title: "Status",
@@ -294,6 +291,7 @@ export default function DeviceProfileListPage() {
           showTotal: (total) => `Total ${total} items`,
         }}
         onChange={handleTableChange}
+        scroll={{ x: 'max-content' }} // Tính năng cuộn ngang
       />
 
       <Modal
@@ -505,11 +503,11 @@ export default function DeviceProfileListPage() {
             )}
           </Form.List>
 
-          <Form.Item className="mt-4">
-            <Button type="primary" htmlType="submit" loading={loading}>
-              Submit
+          <div className="flex justify-center mt-4">
+            <Button type="primary" htmlType="submit">
+              Save
             </Button>
-          </Form.Item>
+          </div>
         </Form>
       </Modal>
     </div>

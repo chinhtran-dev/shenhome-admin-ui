@@ -107,6 +107,7 @@ export default function CategoryListPage() {
 			title: 'ID',
 			dataIndex: 'id',
 			key: 'id',
+			ellipsis: true, // Cắt bớt nội dung nếu quá dài
 		},
 		{
 			title: 'Status',
@@ -123,16 +124,19 @@ export default function CategoryListPage() {
 			title: 'Name',
 			dataIndex: 'name',
 			key: 'name',
+			ellipsis: true, // Cắt bớt nội dung nếu quá dài
 		},
 		{
 			title: 'Created On',
 			dataIndex: 'createdOn',
 			key: 'createdOn',
+			ellipsis: true, // Cắt bớt nội dung nếu quá dài
 		},
 		{
 			title: 'Modified On',
 			dataIndex: 'modifiedOn',
 			key: 'modifiedOn',
+			ellipsis: true, // Cắt bớt nội dung nếu quá dài
 		},
 		{
 			title: 'Action',
@@ -171,6 +175,10 @@ export default function CategoryListPage() {
 				columns={columns}
 				dataSource={filteredCategories}
 				rowKey="id"
+				scroll={{ x: 'max-content' }} // Thêm scroll ngang nếu bảng có quá nhiều cột
+				pagination={false} // Tắt phân trang nếu bảng có ít dữ liệu
+				bordered
+				size="middle" // Giảm kích thước của bảng để dễ dàng vừa màn hình hơn
 			/>
 
 			<Modal
@@ -219,7 +227,6 @@ export default function CategoryListPage() {
 					</Form.Item>
 				</Form>
 			</Modal>
-
 		</div>
 	);
 }
