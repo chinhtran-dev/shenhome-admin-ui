@@ -13,10 +13,8 @@ export default function AdminLayout({
 }) {
 	return (
 		<ProtectedRoute>
-
 			<Layout style={{ minHeight: '100vh' }}>
 				<AdminSidebar />
-
 				<Layout>
 					<Content className="p-6 bg-gray-50">
 						{children}
@@ -24,6 +22,5 @@ export default function AdminLayout({
 				</Layout>
 			</Layout>
 		</ProtectedRoute>
-
 	);
 }

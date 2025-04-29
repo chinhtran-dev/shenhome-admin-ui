@@ -1,6 +1,6 @@
 import { DeviceType } from "@/util/enum";
 import { Property } from "./property";
-import { Command } from "./command";
+import { Command } from "./deviceOperation";
 
 export interface DeviceProfile {
 	id: string;

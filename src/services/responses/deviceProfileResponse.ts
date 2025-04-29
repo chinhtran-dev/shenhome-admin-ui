@@ -1,4 +1,4 @@
-import { Command } from "@/dto/command";
+import { DeviceOperation } from "@/dto/deviceOperation";
 import { Property } from "@/dto/property";
 
 export interface DeviceProfileSearchResponse {
@@ -15,7 +15,7 @@ export interface DeviceProfileSearchResponse {
 export interface DeviceProfileViewResponse extends DeviceProfileSearchResponse {
   attributes: Property[];
   telemetries: Property[];
-  commands: Command[];
+  deviceOperations: DeviceOperation[];
   categoryId: string;
 }
 

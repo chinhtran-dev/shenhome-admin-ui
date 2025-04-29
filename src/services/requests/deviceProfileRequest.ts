@@ -1,4 +1,4 @@
-import { Command } from "@/dto/command";
+import { DeviceOperation } from "@/dto/deviceOperation";
 import { Property } from "@/dto/property";
 
 class BaseDeviceProfileRequest {
@@ -10,7 +10,7 @@ class BaseDeviceProfileRequest {
         public categoryId: string = '',
         public attributes: Property[] = [],
         public telemetries: Property[] = [],
-        public commands: Command[] = []
+        public deviceOperations: DeviceOperation[] = []
     ) {}
 }
 
@@ -23,9 +23,9 @@ export class CreateDeviceProfileRequest extends BaseDeviceProfileRequest {
         categoryId: string = '',
         attributes: Property[] = [],
         telemetries: Property[] = [],
-        commands: Command[] = []
+        deviceOperations: DeviceOperation[] = []
     ) {
-        super(name, code, iconCodePoint, categoryId, type, attributes, telemetries, commands);
+        super(name, code, iconCodePoint, categoryId, type, attributes, telemetries, deviceOperations);
     }
 }
 
@@ -38,8 +38,8 @@ export class UpdateDeviceProfileRequest extends BaseDeviceProfileRequest {
         categoryId?: string,
         attributes: Property[] = [],
         telemetries: Property[] = [],
-        commands: Command[] = []
+        deviceOperations: DeviceOperation[] = []
     ) {
-        super(name, code, iconCodePoint, categoryId, type, attributes, telemetries, commands);
+        super(name, code, iconCodePoint, categoryId, type, attributes, telemetries, deviceOperations);
     }
 }

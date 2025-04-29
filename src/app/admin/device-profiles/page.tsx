@@ -12,6 +12,7 @@ import {
   Select,
   Badge,
   message,
+  Checkbox,
 } from "antd";
 import { DeviceProfileService } from "@/services/deviceProfileService";
 import { SearchRequest } from "@/services/requests/baseRequest";
@@ -20,17 +21,17 @@ import {
   UpdateDeviceProfileRequest,
 } from "@/services/requests/deviceProfileRequest";
 import {
-  DeviceProfileSearchResponse,
   DeviceProfileViewResponse,
 } from "@/services/responses/deviceProfileResponse";
 import { CategoryService } from "@/services/categoryService";
 import { CategoryListSelectItem } from "@/services/responses/categoryResponse";
+import { DeviceSearchResponse } from "@/services/responses/deviceResponse";
 
 const { Option } = Select;
 
 export default function DeviceProfileListPage() {
   const [deviceProfiles, setDeviceProfiles] = useState<
-    DeviceProfileSearchResponse[]
+  DeviceSearchResponse[]
   >([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -56,10 +57,15 @@ export default function DeviceProfileListPage() {
   const loadCategories = async () => {
     try {
       const data = await categoryService.listSelect();
-      setCategories(data);
+      if (data) {
+        setCategories(data);
+      } else {
+        setCategories([]);
+      }
     } catch (error) {
       message.error("Failed to load categories");
       console.error(error);
+      setCategories([]);
     }
   };
 
@@ -123,7 +129,7 @@ export default function DeviceProfileListPage() {
         status: data.status,
         attributes: data.attributes != null ? data.attributes : [{}],
         telemetries: data.telemetries != null ? data.telemetries : [{}],
-        commands: data.commands.length ? data.commands : [{}],
+        operations: data.deviceOperations.length ? data.deviceOperations : [{}],
       });
       setModalVisible(true);
     } catch (error) {
@@ -159,7 +165,7 @@ export default function DeviceProfileListPage() {
           values.iconCodePoint,
           values.attributes,
           values.telemetries,
-          values.commands
+          values.operations
         );
         await deviceProfileService.update(request, currentProfile.id);
         message.success("Device profile updated successfully");
@@ -172,7 +178,7 @@ export default function DeviceProfileListPage() {
           values.iconCodePoint,
           values.attributes,
           values.telemetries,
-          values.commands
+          values.operations
         );
         await deviceProfileService.create(request);
         message.success("Device profile created successfully");
@@ -201,13 +207,12 @@ export default function DeviceProfileListPage() {
       title: "ID",
       dataIndex: "id",
       key: "id",
-			ellipsis: true,
+      ellipsis: true,
     },
     {
       title: "IconCodePoint",
       dataIndex: "iconCodePoint",
       key: "iconCodePoint",
-      width: 200, // Điều chỉnh chiều rộng cột
     },
     {
       title: "Status",
@@ -445,63 +450,116 @@ export default function DeviceProfileListPage() {
             )}
           </Form.List>
 
-          {/* Commands Table */}
-          <Form.List name="commands">
+          <Form.List name="operations">
             {(fields, { add, remove }) => (
               <>
                 <div className="flex justify-between items-center mt-4 mb-2">
-                  <h2 className="font-semibold">Commands</h2>
+                  <h2 className="font-semibold">Operations</h2>
                   <Button type="dashed" onClick={() => add()} size="small">
-                    Add Command
+                    Add Operation
                   </Button>
                 </div>
                 {fields.map(({ key, name, ...restField }) => (
-                  <Space
+                  <div
                     key={key}
-                    style={{ display: "flex", marginBottom: 8 }}
-                    align="baseline"
+                    className="border border-[#ccc] rounded-lg p-4 mb-4"
                   >
-                    <Form.Item
-                      {...restField}
-                      name={[name, "name"]}
-                      rules={[{ required: true }]}
-                    >
-                      <Input placeholder="Name" />
-                    </Form.Item>
-                    <Form.Item
-                      {...restField}
-                      name={[name, "comparision"]}
-                      rules={[{ required: true }]}
-                    >
-                      <Select placeholder="Select Comparision">
-                        <Option value="eq">Equal</Option>
-                        <Option value="neq">Not Equal</Option>
-                        <Option value="gt">Greater Than</Option>
-                        <Option value="lt">Less Than</Option>
-                      </Select>
-                    </Form.Item>
-                    <Form.Item
-                      {...restField}
-                      name={[name, "property", "key"]}
-                      rules={[{ required: true }]}
-                    >
-                      <Input placeholder="Property Key" />
-                    </Form.Item>
-                    <Form.Item
-                      {...restField}
-                      name={[name, "property", "value"]}
-                      rules={[{ required: true }]}
-                    >
-                      <Input placeholder="Property Value" />
-                    </Form.Item>
-                    <Button danger onClick={() => remove(name)}>
-                      Delete
-                    </Button>
-                  </Space>
+                    <div className="flex gap-10">
+                      <Form.Item
+                        {...restField}
+                        name={[name, "name"]}
+                        rules={[{ required: true, message: "Please input the name!" }]}
+                        style={{ flex: 1 }}
+                      >
+                        <Input placeholder="Operation Name" />
+                      </Form.Item>
+
+                      <Form.Item
+                        {...restField}
+                        name={[name, "comparision"]}
+                        rules={[{ required: true, message: "Please select a comparison!" }]}
+                        style={{ flex: 1 }}
+                      >
+                        <Select placeholder="Comparison">
+                          <Option value="eq">Equal</Option>
+                          <Option value="neq">Not Equal</Option>
+                          <Option value="gt">Greater Than</Option>
+                          <Option value="lt">Less Than</Option>
+                        </Select>
+                      </Form.Item>
+                    </div>
+
+                    <div className="flex gap-10">
+                      <Form.Item
+                        {...restField}
+                        name={[name, "parameter", "key"]}
+                        rules={[{ required: true, message: "Parameter key is required!" }]}
+                        style={{ flex: 1 }}
+                      >
+                        <Input placeholder="Parameter Key" />
+                      </Form.Item>
+
+                      <Form.Item
+                        {...restField}
+                        name={[name, "parameter", "value"]}
+                        rules={[{ required: true, message: "Parameter value is required!" }]}
+                        style={{ flex: 1 }}
+                      >
+                        <Input placeholder="Parameter Value" />
+                      </Form.Item>
+                    </div>
+
+                    <div className="flex gap-10 items-center">
+                      <Form.Item
+                        {...restField}
+                        name={[name, "parameter", "isEditable"]}
+                        valuePropName="checked"
+                        style={{ flex: 1 }}
+                      >
+                        <Checkbox>Editable</Checkbox>
+                      </Form.Item>
+
+                      <Form.Item
+                        {...restField}
+                        name={[name, "parameter", "widgetType"]}
+                        style={{ flex: 1 }}
+                      >
+                        <Select placeholder="Widget Type">
+                          <Option value="text">Text</Option>
+                          <Option value="number">Number</Option>
+                          <Option value="slider">Slider</Option>
+                          <Option value="checkbox">Checkbox</Option>
+                        </Select>
+                      </Form.Item>
+                    </div>
+
+                    <div className="flex gap-10">
+                      <Form.Item
+                        {...restField}
+                        name={[name, "parameter", "range"]}
+                        style={{ flex: 1 }}
+                      >
+                        <Input
+                          placeholder="Range (e.g., [0, 100])"
+                          onBlur={(e) => {
+                            const parsed = JSON.parse(e.target.value);
+                            if (!Array.isArray(parsed)) {
+                              throw new Error("Range must be an array");
+                            }
+                          }}
+                        />
+                      </Form.Item>
+
+                      <Button danger onClick={() => remove(name)} style={{ marginTop: "4px" }}>
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
                 ))}
               </>
             )}
           </Form.List>
+
 
           <div className="flex justify-center mt-4">
             <Button type="primary" htmlType="submit">

@@ -10,7 +10,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.replace('/auth/login'); // Redirect nếu chưa login
+      router.replace('/auth/login');
     }
   }, [isAuthenticated, router]);
 

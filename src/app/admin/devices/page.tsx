@@ -36,10 +36,15 @@ export default function DeviceListPage() {
 	const loadDeviceProfiles = async () => {
 		try {
 			const data = await deviceProfileService.listSelect();
-			setDeviceProfiles(data);
+			if (data) {
+				setDeviceProfiles(data);
+			} else {
+				setDeviceProfiles([]);
+			}
 		} catch (error) {
 			message.error('Failed to load device profiles');
 			console.error(error);
+			setDeviceProfiles([]);
 		}
 	};
 

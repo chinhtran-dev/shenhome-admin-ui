@@ -15,6 +15,7 @@ export class DeviceProfileService {
 	}
 
 	async create(request: CreateDeviceProfileRequest): Promise<void> {
+		console.log(request);
 		await baseService.post(Url.deviceProfile.create, request);
 	}
 

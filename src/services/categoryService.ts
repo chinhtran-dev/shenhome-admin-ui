@@ -35,6 +35,8 @@ export class CategoryService {
 	async listSelect(): Promise<CategoryListSelectItem[]> {
 		const res = await baseService.get(Url.category.listSelect);
 		const responseData = res.data as ApiResponse<CategorySearchResponse[]>;
+
+		console.log(responseData)
 		
 		return responseData.data;
 	}
