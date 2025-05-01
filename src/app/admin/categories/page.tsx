@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Table, Button, Space, Popconfirm, Modal, Form, Input, Badge, message, Typography } from 'antd';
+import { Table, Button, Space, Popconfirm, Modal, Form, Input, Badge, message, Typography, Select } from 'antd';
 import { CategoryService } from '@/services/categoryService';
 import { SearchRequest } from '@/services/requests/baseRequest';
 import { CreateCategoryRequest, UpdateCategoryRequest } from '@/services/requests/categoryRequest';
 import { CategorySearchResponse } from '@/services/responses/categoryResponse';
+const { Option } = Select;
 
 export default function CategoryListPage() {
 	const [categories, setCategories] = useState<CategorySearchResponse[]>([]);
@@ -198,8 +199,11 @@ export default function CategoryListPage() {
 								<Typography.Text>{currentCategory.id}</Typography.Text>
 							</Form.Item>
 
-							<Form.Item label="Status">
-								<Input value={currentCategory.status} />
+							<Form.Item label="Status" name="status"  rules={[{ required: true }]}>
+								<Select value={currentCategory.status}>
+									<Option value="Enabled">Enabled</Option>
+									<Option value="Disabled">Disabled</Option>
+								</Select>
 							</Form.Item>
 
 							<Form.Item label="Created On">

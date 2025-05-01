@@ -156,6 +156,7 @@ export default function DeviceProfileListPage() {
     try {
       setLoading(true);
       const categoryId = values.categoryId;
+      console.log(values.operations);
       if (currentProfile) {
         const request = new UpdateDeviceProfileRequest(
           values.name,
@@ -331,8 +332,8 @@ export default function DeviceProfileListPage() {
           </Form.Item>
 
           <Form.Item label="Status" name="status" rules={[{ required: true }]}>
-            <Select>
-              <Option value="Enabled">Enabled</Option>
+          <Select value={currentProfile?.status}>
+          <Option value="Enabled">Enabled</Option>
               <Option value="Disabled">Disabled</Option>
             </Select>
           </Form.Item>

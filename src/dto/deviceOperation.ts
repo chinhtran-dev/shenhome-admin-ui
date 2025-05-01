@@ -5,7 +5,7 @@ export interface DeviceOperation {
     value: string | number | boolean;
     isEditable: boolean,
     widgetType: string,
-    range: number[]
+    range: string
   };
   comparision: "eq" | "neq" | "gt" | "lt";
 }
